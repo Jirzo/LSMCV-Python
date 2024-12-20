@@ -1,70 +1,83 @@
-# Comentarios clave:
-# 1 -Procesamiento de directorios y clases:
-#       Cada subdirectorio dentro de DATA_DIR se considera una clase.
-#       Las imágenes dentro de cada subdirectorio representan ejemplos de esa clase.
-# 2- Extracción de landmarks:
-#       MediaPipe devuelve coordenadas normalizadas (valores entre 0 y 1) para los landmarks detectados en la mano.
-#       Estas coordenadas se almacenan como pares x, y en la lista data_aux.
-# 3- Etiquetas:
-#       dir_ se utiliza como la etiqueta para cada conjunto de landmarks procesados. Esto ayuda a conectar los datos con su categoría correspondiente.
-# 4- Serialización con pickle:
-#       Los datos y las etiquetas se guardan en un archivo binario (data.pickle) para su uso posterior, como entrenamiento de modelos de machine learning.
-
 import os
-import pickle
-
-import mediapipe as mp
 import cv2
-import matplotlib.pyplot as plt
-
+import pickle
+import numpy as np
+import tensorflow as tf  # Importa TensorFlow
+import mediapipe as mp
+from tqdm import tqdm  # Para mostrar el progreso en terminal
 from dotenv import load_dotenv
 
+# Cargar variables de entorno si es necesario
 load_dotenv()
+
+# Directorio que contiene los datos organizados por clases
 DATA_DIR = "./data"
-# Inicializar MediaPipe para la detección de manos.
+
+# Inicializar MediaPipe para la detección de manos
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
-
 hands = mp_hands.Hands(static_image_mode=True, min_detection_confidence=0.3)
 
+# Listas para almacenar los datos y etiquetas procesadas
+data = []  # Coordenadas de landmarks
+labels = []  # Etiquetas de clase
 
-data = []  # Lista para almacenar las coordenadas procesadas de los landmarks.
-label = []  # Lista para almacenar las etiquetas correspondientes.
+# Diccionario para mapear clases a índices
+class_names = sorted(os.listdir(DATA_DIR))  # Asumimos que los directorios son las clases
+class_dict = {class_name: idx for idx, class_name in enumerate(class_names)}
 
-# Recorrer cada directorio en la carpeta de datos.
-# Cada directorio representa una clase diferente (por ejemplo, un gesto o una categoría).
-for dir_ in os.listdir(DATA_DIR):
-    # Procesar cada imagen dentro del directorio actual.
-    for img_path in os.listdir(os.path.join(DATA_DIR, dir_)):
-        data_aux = []  # Lista temporal para almacenar los landmarks de una sola imagen.
+# Recorrer cada directorio/clase en la carpeta de datos
+for dir_ in tqdm(os.listdir(DATA_DIR), desc="Procesando clases"):
+    class_path = os.path.join(DATA_DIR, dir_)
 
-        # Leer la imagen para convertirla de BGR (formato OpenCV) a RGB (formato MediaPipe).
-        img = cv2.imread(os.path.join(DATA_DIR, dir_, img_path))
+    # Verificar si el directorio es válido
+    if not os.path.isdir(class_path):
+        continue
+        
+    # Procesar cada imagen dentro del directorio actual
+    for img_path in tqdm(os.listdir(class_path), desc=f"Procesando imágenes de {dir_}", leave=False):
+        img_full_path = os.path.join(class_path, img_path)
+
+        # Leer y validar la imagen
+        img = cv2.imread(img_full_path)
+        if img is None:
+            print(f"Advertencia: No se pudo cargar la imagen {img_full_path}. Saltando...")
+            continue
+
+        # Convertir la imagen a RGB para MediaPipe
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        # Procesar la imagen con MediaPipe para detectar las manos y sus landmarks.
+        # Procesar la imagen con MediaPipe para detectar landmarks
         result = hands.process(img_rgb)
-
-        # Si se detectan landmarks en la imagen:
-        if result.multi_hand_landmarks:
-            # Iterar a través de todas las manos detectadas (en caso de múltiples manos).
+        if result.multi_hand_landmarks:  # Si se detectan manos
             for hand_landmarks in result.multi_hand_landmarks:
+                data_aux = []
                 for i in range(len(hand_landmarks.landmark)):
                     x = hand_landmarks.landmark[i].x
                     y = hand_landmarks.landmark[i].y
                     data_aux.append(x)
                     data_aux.append(y)
 
-            # Agregar los landmarks procesados a la lista principal de datos.
-            data.append(data_aux)
+                # Agregar landmarks y etiquetas a las listas principales
+                data.append(data_aux)
+                labels.append(class_dict[dir_])  # Usar índice numérico de la clase
+        else:
+            print(f"Advertencia: No se detectaron landmarks en {img_full_path}. Saltando...")
 
-            # Agregar la etiqueta (clase) correspondiente a la lista de etiquetas.
-            # 'dir_' representa la clase basada en el nombre del directorio.
-            label.append(dir_)
+# Convertir a arrays de NumPy
+data = np.array(data, dtype=np.float32)
+labels = np.array(labels, dtype=np.int32)
 
-# Guardar los datos y etiquetas en un archivo binario utilizando pickle.
-# Esto permite que los datos sean reutilizados más tarde para entrenamiento o evaluación del modelo.
-f = open("data.pickle", "wb")
-pickle.dump({"data": data, "labels": label}, f)
-f.close()
+# # Guardar el dataset como archivo de TensorFlow
+dataset = tf.data.Dataset.from_tensor_slices((data, labels))
+
+# Opcionalmente, puedes guardar el dataset a un archivo de TFRecord si lo necesitas
+# Aquí se guarda en un archivo pickle, pero en TensorFlow lo ideal es usar tf.data o TFRecord
+
+# Serializar los datos y etiquetas en un archivo pickle
+output_file = "data_tensorflow.pickle"
+with open(output_file, "wb") as f:
+    pickle.dump({"data": data, "labels": labels}, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+print(f"Dataset procesado y guardado en {output_file}.")

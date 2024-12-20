@@ -1,3 +1,41 @@
 /data
 /pickles
 /6554337.json
+/model.p
+/model_abecedario.joblib
+/model_abecedario.pickle
+/data.pickle
+
+# Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+/.env/
+*.env
+/.venv/
+*.venv
+pipenv.lock
+Pipfile.lock
+
+# Folders for captured images
+/data/
+
+# System files
+.DS_Store          # macOS
+Thumbs.db          # Windows
+
+# IDE or editor specific files
+.idea/             # PyCharm, JetBrains
+.vscode/           # VS Code
+*.swp              # Vim swap files
+
+# Log files
+*.log
+
+# Environment variables
+.env
+
+# Miscellaneous
+*.bak      

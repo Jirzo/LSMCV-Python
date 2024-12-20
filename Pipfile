@@ -8,8 +8,10 @@ opencv-python = "*"
 mediapipe = "*"
 scikit-learn = "*"
 python-dotenv = "*"
+pillow = "*"
+tensorflow = "*"
+keras = "*"
+tqdm = "*"
+joblib = "*"
 
 [dev-packages]
-
-[requires]
-python_version = "3.12"

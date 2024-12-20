@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 27
+names: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'LL', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+
+roboflow:
+  workspace: datasetbyte
+  project: lsm-byte-aoboj
+  version: 2
+  license: Public Domain
+  url: https://universe.roboflow.com/datasetbyte/lsm-byte-aoboj/dataset/2

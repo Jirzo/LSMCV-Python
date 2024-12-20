@@ -5,8 +5,10 @@ import pickle
 import numpy as np
 import mediapipe as mp
 
-cap = cv2.VideoCapture(0)
-model_dict = pickle.load(open("./model.p", "rb"))
+from joblib import dump, load
+
+cap = cv2.VideoCapture(1)
+model_dict = pickle.load(open("model_abecedario.p", "rb"))
 model = model_dict["model"]
 
 # Initialize MediaPipe for hand detection.
@@ -15,9 +17,9 @@ mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 
 hands = mp_hands.Hands(static_image_mode=True, min_detection_confidence=0.3)
-labels_dict = {0: "A", 1: "B", 2: "C"}
+labels_dict = {i: chr(65 + i) for i in range(26)}  # Esto crea un diccionario {0: 'A', 1: 'B', ..., 25: 'Z'}
 
-expected_features = 84  # Adjust based on the model's input feature count.
+expected_features = 42  # Adjust based on the model's input feature count.
 
 while True:
     data_aux = []
