@@ -10,7 +10,7 @@ load_dotenv()
 font_path = './fonts/Roboto-Regular.ttf'  # Ruta a la fuente personalizada
 font_size = 28  # Tamaño de la fuente
 DATA_DIR = './data'  # Carpeta para almacenar las imágenes
-dataset_size = 833  # Número de imágenes por clase
+dataset_size = 2000  # Número de imágenes por clase
 alphabet = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")  # Letras del alfabeto
 
 # Crear directorio base si no existe
@@ -37,10 +37,10 @@ font = load_font()
 
 while True:
     # Seleccionar clase
-    print("\nSeleccione la letra para capturar (A-Z). Ingrese 'Q' para salir.")
+    print("\nSeleccione la letra para capturar (A-Z). Ingrese '1' para salir.")
     selected_letter = input("Letra: ").strip().upper()
 
-    if selected_letter == "Q":
+    if selected_letter == "1":
         break
 
     if selected_letter not in alphabet:
@@ -52,7 +52,7 @@ while True:
         os.makedirs(class_dir)
 
     print(f'\nPreparando captura para la letra "{selected_letter}"...')
-    text = f'Capturing: {selected_letter} | Press "Q" to stop'
+    text = f'Capturing: {selected_letter} | Press "1" to stop'
 
     # Mostrar texto en pantalla hasta que se presione 'Q'
     while True:
@@ -94,7 +94,7 @@ while True:
         cv2.imshow(window_name, frame_with_text)
 
         # Cerrar con 'Q'
-        if cv2.waitKey(25) == ord('q'):
+        if cv2.waitKey(25) == ord('1'):
             break
 
     # Capturar imágenes para la letra seleccionada

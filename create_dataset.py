@@ -1,14 +1,9 @@
 import os
 import cv2
-import pickle
 import numpy as np
-import tensorflow as tf  # Importa TensorFlow
 import mediapipe as mp
 from tqdm import tqdm  # Para mostrar el progreso en terminal
-from dotenv import load_dotenv
-
-# Cargar variables de entorno si es necesario
-load_dotenv()
+from joblib import dump
 
 # Directorio que contiene los datos organizados por clases
 DATA_DIR = "./data"
@@ -27,6 +22,9 @@ labels = []  # Etiquetas de clase
 class_names = sorted(os.listdir(DATA_DIR))  # Asumimos que los directorios son las clases
 class_dict = {class_name: idx for idx, class_name in enumerate(class_names)}
 
+# Diccionario para contar imágenes saltadas por cada clase
+skipped_images_count = {class_name: 0 for class_name in class_names}
+
 # Recorrer cada directorio/clase en la carpeta de datos
 for dir_ in tqdm(os.listdir(DATA_DIR), desc="Procesando clases"):
     class_path = os.path.join(DATA_DIR, dir_)
@@ -34,7 +32,7 @@ for dir_ in tqdm(os.listdir(DATA_DIR), desc="Procesando clases"):
     # Verificar si el directorio es válido
     if not os.path.isdir(class_path):
         continue
-        
+
     # Procesar cada imagen dentro del directorio actual
     for img_path in tqdm(os.listdir(class_path), desc=f"Procesando imágenes de {dir_}", leave=False):
         img_full_path = os.path.join(class_path, img_path)
@@ -43,6 +41,7 @@ for dir_ in tqdm(os.listdir(DATA_DIR), desc="Procesando clases"):
         img = cv2.imread(img_full_path)
         if img is None:
             print(f"Advertencia: No se pudo cargar la imagen {img_full_path}. Saltando...")
+            skipped_images_count[dir_] += 1
             continue
 
         # Convertir la imagen a RGB para MediaPipe
@@ -64,20 +63,24 @@ for dir_ in tqdm(os.listdir(DATA_DIR), desc="Procesando clases"):
                 labels.append(class_dict[dir_])  # Usar índice numérico de la clase
         else:
             print(f"Advertencia: No se detectaron landmarks en {img_full_path}. Saltando...")
+            skipped_images_count[dir_] += 1
 
 # Convertir a arrays de NumPy
 data = np.array(data, dtype=np.float32)
 labels = np.array(labels, dtype=np.int32)
 
-# # Guardar el dataset como archivo de TensorFlow
-dataset = tf.data.Dataset.from_tensor_slices((data, labels))
+# Guardar el dataset como archivo usando joblib
+output_file = "data_tensorflow.joblib"
+dump({"data": data, "labels": labels}, output_file)
 
-# Opcionalmente, puedes guardar el dataset a un archivo de TFRecord si lo necesitas
-# Aquí se guarda en un archivo pickle, pero en TensorFlow lo ideal es usar tf.data o TFRecord
+# Mostrar resumen de imágenes saltadas
+print("\nResumen de imágenes saltadas por clase:")
+for class_name, count in skipped_images_count.items():
+    print(f"{class_name}: {count} imágenes saltadas")
 
-# Serializar los datos y etiquetas en un archivo pickle
-output_file = "data_tensorflow.pickle"
-with open(output_file, "wb") as f:
-    pickle.dump({"data": data, "labels": labels}, f, protocol=pickle.HIGHEST_PROTOCOL)
+print(f"\nDataset procesado y guardado en {output_file}.")
 
-print(f"Dataset procesado y guardado en {output_file}.")
+# Para cargar el dataset más tarde
+# dataset = load("data_tensorflow.joblib")
+# data, labels = dataset["data"], dataset["labels"]
+# print(f"Dataset cargado. Datos: {data.shape}, Etiquetas: {len(labels)}")
