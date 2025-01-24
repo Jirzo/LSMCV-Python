@@ -36,7 +36,7 @@ print(classification_report(y_test, y_predict))
 
 # Matriz de confusión
 print("\nMatriz de confusion:")
-print(confusion_matrix, y_predict)
+print(confusion_matrix(y_test, y_predict), y_predict)
 
 # Guardar modelo y escalador para uso futuro
 dump({"model": model, "scaler": scaler}, "model_abecedario.joblib")

@@ -80,7 +80,3 @@ for class_name, count in skipped_images_count.items():
 
 print(f"\nDataset procesado y guardado en {output_file}.")
 
-# Para cargar el dataset más tarde
-# dataset = load("data_tensorflow.joblib")
-# data, labels = dataset["data"], dataset["labels"]
-# print(f"Dataset cargado. Datos: {data.shape}, Etiquetas: {len(labels)}")
