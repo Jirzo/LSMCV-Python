@@ -1,10 +1,7 @@
 /data
-/pickles
-/6554337.json
-/model.p
-/model_abecedario.joblib
-/model_abecedario.pickle
-/data.pickle
+datalettersset.joblib
+randomFT_model.joblib
+best_rf_model.joblib
 
 # Python bytecode files
 __pycache__/

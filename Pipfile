@@ -13,5 +13,6 @@ tensorflow = "*"
 keras = "*"
 tqdm = "*"
 joblib = "*"
+xgboost = "*"
 
 [dev-packages]
