@@ -47,8 +47,6 @@ def datasetcCreation(hands_model):
                     data.append(data_aux)
                     labels.append(class_dict[dir_])  # Use numeric index of the class
             else:
-                print("DIR: ", dir_)
-                print("SSSSSSSSSSSSSSSSS: ", skipped_images_count)
                 print(f"Warning: No landmarks detected in {img_full_path}. Skipping...")
 
                 skipped_images_count[dir_] += 1

@@ -8,7 +8,7 @@ import numpy as np
 
 def randomForestClassifier():
     # Cargar datos
-    data_dict = load("datalettersset.joblib")
+    data_dict = load("datamovinglettersset.joblib")
     data, labels = data_dict["data"], data_dict["labels"]
 
     # Normalización

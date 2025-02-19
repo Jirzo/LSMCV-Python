@@ -14,5 +14,8 @@ keras = "*"
 tqdm = "*"
 joblib = "*"
 xgboost = "*"
+pandas = "*"
+azure-ai-ml = "*"
+azure-identity = "*"
 
 [dev-packages]

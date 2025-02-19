@@ -8,7 +8,8 @@ from settings.landmarks import mp_drawing_styles, mp_hands, mp_face_mesh, mp_dra
 
 def iClassifier(hands, frame):
     # Cargar modelo y escalador
-    model_dict = load("randomFT_model.joblib")
+    model_dict = load("datamovinglettersset.joblib")
+    print(model_dict)
     model = model_dict["model"]
     scaler = model_dict["scaler"]
 
