@@ -1,6 +1,10 @@
 /data
+/dataStaticSigns
+/dataTesting
 datalettersset.joblib
 randomFT_model.joblib
+datamovinglettersset.joblib
+datasetMovingTesting.joblib
 best_rf_model.joblib
 
 # Python bytecode files
@@ -36,3 +40,4 @@ Thumbs.db          # Windows
 
 # Miscellaneous
 *.bak      
+datamovinglettersset.joblib

@@ -1,14 +1,12 @@
-from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.metrics import accuracy_score, classification_report
 from sklearn.preprocessing import StandardScaler
 from joblib import dump, load
-import numpy as np
 
 def randomForestClassifier():
     # Cargar datos
-    data_dict = load("datamovinglettersset.joblib")
+    data_dict = load("datalettersset.joblib")
     data, labels = data_dict["data"], data_dict["labels"]
 
     # Normalización
