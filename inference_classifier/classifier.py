@@ -1,9 +1,7 @@
-import os
 import cv2
 import numpy as np
-import mediapipe as mp
 from joblib import load
-from settings.landmarks import mp_drawing_styles, mp_hands, mp_face_mesh, mp_drawing
+from settings.landmarks import mp_drawing_styles, mp_hands, mp_drawing
 
 
 def iClassifier(hands):
@@ -17,20 +15,10 @@ def iClassifier(hands):
     model = model_dict["model"]
     scaler = model_dict["scaler"]
 
-    # alphabet = [
-    #     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'LL', 'M', 'N', 'Ñ',
-    #     'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
-    # ]
-
-    
     alphabet = [
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'L', 'M', 'N',
         'O', 'P', 'R', 'S', 'T', 'U', 'V', 'W', 'Y',
     ]
-
-    # alphabetTesting = [
-    #     'A', 'B', 'C', 'K', 'L', 'LL', 'N', 'Ñ', 'Z'
-    # ]
 
     # Diccionario de etiquetas
     labels_dict = {i: letter for i, letter in enumerate(alphabet)}

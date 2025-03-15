@@ -1,11 +1,9 @@
-import os
-import cv2
 from dataset.create_dataset import datasetcCreation
 from hands_detection.landmarks import mediapipe_detection_fn
 from image_collection.collect_img import frame_instuctions
 from training.randomForestTrainer import randomForestClassifier
 from inference_classifier.classifier import iClassifier
-from settings.landmarks import mp_hands, mp_face_mesh, mp_drawing
+from settings.landmarks import mp_hands
 
 hands_model = mp_hands.Hands(
     static_image_mode=False,
@@ -19,7 +17,7 @@ hands_model = mp_hands.Hands(
 print("Select the action you want to perform:")
 print("1: Collecting images")
 print("2: Create dataset")
-print("3: Entrenar modelo")
+print("3: Training a model")
 print("4: Classifier")
 
 # Windows title
@@ -38,11 +36,11 @@ if option_selected == 1:
     print("Starting image collection...")
     window_title = "Collect Images"
     frame_instuctions()
-    exit()  # Salir después de ejecutar
+    exit()
 
 elif option_selected == 2:
     print("Creating dataset...")
-    datasetcCreation(hands_model)  # Pasa el modelo si es necesario
+    datasetcCreation(hands_model)
     exit()
 
 elif option_selected == 3:
@@ -52,4 +50,4 @@ elif option_selected == 3:
 
 elif option_selected == 4:
     print("Running classifier inference...")
-    iClassifier(hands_model)  # Ejecutar inferencia
+    iClassifier(hands_model)
