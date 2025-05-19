@@ -59,6 +59,8 @@ def datasetcCreation(hands_model):
     output_file = "datalettersset.joblib"
     dump({"data": data, "labels": labels}, output_file)
 
+    # Save the dataset as a file using 
+
     # Show summary of skipped images
     print("\nResumen de imágenes saltadas por clase:")
     for class_name, count in skipped_images_count.items():

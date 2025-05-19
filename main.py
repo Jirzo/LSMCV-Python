@@ -1,4 +1,5 @@
 from dataset.create_dataset import datasetcCreation
+from dataset.create_dataset_tf import datasetTFCreation
 from hands_detection.landmarks import mediapipe_detection_fn
 from image_collection.collect_img import frame_instuctions
 from training.randomForestTrainer import randomForestClassifier
@@ -40,7 +41,7 @@ if option_selected == 1:
 
 elif option_selected == 2:
     print("Creating dataset...")
-    datasetcCreation(hands_model)
+    datasetTFCreation(hands_model)
     exit()
 
 elif option_selected == 3:
