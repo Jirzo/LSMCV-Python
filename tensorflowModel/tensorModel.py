@@ -1,55 +1,46 @@
 import tensorflow as tf
+import json
 
 
-N_FRAMES = 30
-FEATURES_PER_FRAME = 42
-NUM_CLASSES = 21  # A-Z + Ñ (ajústalo a tu caso)
+with open("landmarks_metadata.json", "r") as f:
+    metadata = json.load(f)
 
-def parse_tfrecord(proto):
+# Parámetros esperados
+timesteps = 10  # Número de frames por secuencia
+num_landmarks = 21
+features_per_landmark = 3
+num_classes = metadata["num_classes"]
+
+# Función para parsear el TFRecord
+def _parse_function(example_proto):
     feature_description = {
-        'landmarks': tf.io.FixedLenFeature([N_FRAMES * FEATURES_PER_FRAME], tf.float32),
-        'label': tf.io.FixedLenFeature([], tf.int64)
+        'landmarks': tf.io.FixedLenFeature([timesteps * 63], tf.float32),
+        'label': tf.io.FixedLenFeature([], tf.int64),
     }
-    parsed_example = tf.io.parse_single_example(proto, feature_description)
-
-    landmarks = tf.reshape(parsed_example['landmarks'], (N_FRAMES, FEATURES_PER_FRAME))
-    label = tf.one_hot(parsed_example['label'], depth=NUM_CLASSES)  # opcional
+    parsed_example = tf.io.parse_single_example(example_proto, feature_description)
+    
+    # Restaurar el shape original (timesteps, 21, 3)
+    landmarks = tf.reshape(parsed_example["landmarks"], (timesteps, num_landmarks, features_per_landmark))
+    label = parsed_example["label"]
     return landmarks, label
 
-# raw_dataset = tf.data.TFRecordDataset('landmarks_dataset')
-# parsed_dataset = raw_dataset.map(parse_tfrecord)
-# parsed_dataset = parsed_dataset.shuffle(1000).batch(32).prefetch(tf.data.AUTOTUNE)
-
-def load_dataset(tfrecord_path, batch_size=32, shuffle_buffer=1000):
+# Cargar el dataset
+def load_dataset(tfrecord_path, batch_size=32, shuffle=True):
     dataset = tf.data.TFRecordDataset(tfrecord_path)
-    dataset = dataset.map(parse_tfrecord)
-    dataset = dataset.shuffle(shuffle_buffer)
+    dataset = dataset.map(_parse_function)
+    if shuffle:
+        dataset = dataset.shuffle(1000)
     dataset = dataset.batch(batch_size)
-    dataset = dataset.prefetch(tf.data.AUTOTUNE)
     return dataset
 
 train_ds = load_dataset("sequences_dataset.tfrecord")
 
-model = tf.keras.Sequential([
-    tf.layers.Input(shape=(N_FRAMES, FEATURES_PER_FRAME)),
-
-    # LSTM puede ser bidireccional para capturar patrones hacia adelante y atrás
-    tf.layers.Bidirectional(tf.layers.LSTM(64, return_sequences=True)),
-    tf.layers.Bidirectional(tf.layers.LSTM(32)),
-
-    tf.layers.Dense(64, activation='relu'),
-    tf.layers.Dropout(0.4),
-    tf.layers.Dense(NUM_CLASSES, activation='softmax')
+model = tf.keras.models.Sequential([
+    tf.keras.layers.Reshape((timesteps, 63), input_shape=(timesteps, 21, 3)),
+    tf.keras.layers.LSTM(64),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(num_classes, activation='softmax')
 ])
 
-model.compile(
-    optimizer='adam',
-    loss='categorical_crossentropy',
-    metrics=['accuracy']
-)
-
-history = model.fit(
-    train_ds,
-    validation_data=val_ds,
-    epochs=30
-)
+model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+history = model.fit(train_ds, epochs=30)
