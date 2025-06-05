@@ -1,27 +1,28 @@
 import tensorflow as tf
-import joblib
-import numpy as np
 
-# Ruta al archivo joblib que contiene mi dataset
-joblib_file_route = 'datalettersset.joblib'
+# Parámetros esperados
+timesteps = 10  # Número de frames por secuencia
+num_landmarks = 21
+features_per_landmark = 3
 
-# Cargar los datos del archivos joblib
-loaded_dataset = joblib.load(joblib_file_route)
-landmark_coordinates = loaded_dataset['data']
-labels = loaded_dataset['labels']
+# Función para parsear el TFRecord
+def _parse_function(example_proto):
+    feature_description = {
+        "landmarks": tf.io.FixedLenFeature([timesteps * num_landmarks * features_per_landmark], tf.float32),
+        "label": tf.io.FixedLenFeature([], tf.int64),
+    }
+    parsed_example = tf.io.parse_single_example(example_proto, feature_description)
+    
+    # Restaurar el shape original (timesteps, 21, 3)
+    landmarks = tf.reshape(parsed_example["landmarks"], (timesteps, num_landmarks, features_per_landmark))
+    label = parsed_example["label"]
+    return landmarks, label
 
-# Crear el tf.data.Dataset
-dataset = tf.data.Dataset.from_tensor_slices((landmark_coordinates, labels))
-
-# Configurar el dataset para el entrenamiento (batching, shuffling, prefetching)
-batch_size = 32
-dataset = dataset.shuffle(buffer_size=len(landmark_coordinates)).batch(batch_size).prefetch(tf.data.AUTOTUNE)
-
-# Ahora puedes usar este 'dataset' para entrenar tu modelo de TensorFlow
-# Por ejemplo:
-# model.fit(dataset, epochs=10)
-
-# Iterar sobre el dataset para verificar los datos
-for cordinates, labels in dataset:
-    print("Lote de coordenadas:", cordinates.numpy().shape)
-    print("Lote de etiquetas:", labels.numpy().shape)
+# Cargar el dataset
+def load_dataset(tfrecord_path, batch_size=32, shuffle=True):
+    dataset = tf.data.TFRecordDataset(tfrecord_path)
+    dataset = dataset.map(_parse_function)
+    if shuffle:
+        dataset = dataset.shuffle(1000)
+    dataset = dataset.batch(batch_size)
+    return dataset
