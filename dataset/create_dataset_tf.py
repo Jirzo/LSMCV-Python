@@ -1,20 +1,23 @@
 import os
-import cv2 
-import json 
-import numpy as np # Biblioteca NumPy para operaciones numéricas, especialmente con arrays.
-from tqdm import tqdm # Módulo para mostrar barras de progreso, útil para visualizar el avance de bucles.
-import tensorflow as tf # Biblioteca TensorFlow para aprendizaje automático, utilizada para crear y guardar el dataset.
-from settings.collect_image import DATA_DIR # Importa la ruta del directorio donde se encuentran las imágenes, definida en otro archivo.
+import cv2
+import json
+import numpy as np
+from tqdm import tqdm
+import tensorflow as tf
+from settings.collect_image import DATA_DIR
 
-N_FRAMES = 30  # Define el número de frames por secuencia. Cada secuencia estará compuesta por los landmarks de N_FRAMES imágenes consecutivas.
+# --- NUEVO: Importaciones para el escalador ---
+from sklearn.preprocessing import StandardScaler
+import joblib
+
+N_FRAMES = 30
 
 def datasetTFCreation_LSTM(hands_model):
     """
-    Crea un dataset en formato TFRecord a partir de imágenes, extrayendo los landmarks de las manos
-    utilizando un modelo de detección de manos (hands_model). Las secuencias de landmarks se
-    agrupan y se asocian con sus respectivas etiquetas de clase.
+    Crea un dataset en formato TFRecord a partir de imágenes, extrayendo los landmarks,
+    ESCALANDO los datos y guardando tanto el dataset escalado como el escalador.
 
-    Args:
+        Args:
         hands_model: Un modelo cargado (ej. de MediaPipe Hands) capaz de procesar imágenes
                      y detectar landmarks de manos.
     """
@@ -48,6 +51,7 @@ def datasetTFCreation_LSTM(hands_model):
 
             # Lee la imagen usando OpenCV.
             img = cv2.imread(img_full_path)
+            
             # Si la imagen no se pudo leer (ej. archivo corrupto o no es una imagen), incrementa el contador
             # de imágenes saltadas y pasa a la siguiente imagen.
             if img is None:
@@ -66,11 +70,8 @@ def datasetTFCreation_LSTM(hands_model):
                 data_aux = [] # Lista temporal para almacenar las coordenadas (x, y, z) de los landmarks.
                 # Itera sobre cada landmark de la mano.
                 for landmark in hand_landmarks.landmark:
-                    # Agrega las coordenadas x, y, z del landmark a data_aux.
-                    data_aux.append(landmark.x)
-                    data_aux.append(landmark.y)
-                    data_aux.append(landmark.z)
-
+                     # Agrega las coordenadas x, y, z del landmark a data_aux.
+                    data_aux.extend([landmark.x, landmark.y, landmark.z])
                 # Agrega los landmarks de la mano actual a la secuencia temporal.
                 sequence.append(data_aux)
 
@@ -86,18 +87,44 @@ def datasetTFCreation_LSTM(hands_model):
                 # Si no se detectaron landmarks de manos en la imagen, incrementa el contador de imágenes saltadas.
                 skipped_images_count[class_name] += 1
 
-    # Imprime un resumen de cuántas imágenes fueron saltadas por cada clase.
     print("\nResumen de imágenes saltadas por clase:")
     for class_name, count in skipped_images_count.items():
         print(f"{class_name}: {count} imágenes saltadas")
 
-    # Convierte las listas de secuencias y etiquetas a arrays de NumPy con los tipos de datos especificados.
-    sequences = np.array(sequences, dtype=np.float32)
-    labels = np.array(labels, dtype=np.int32)
-    # Llama a la función para guardar las secuencias y etiquetas en un archivo TFRecord.
-    save_to_tfrecord(sequences, labels, 'landmark_sequences.tfrecord')
+    # Convierte las listas a arrays de NumPy (Estos son los datos crudos)
+    X_crudo = np.array(sequences, dtype=np.float32)
+    y = np.array(labels, dtype=np.int32)
+    
+    # --- Bloque completo para crear, ajustar y usar el escalador ---
+    print("\n--- Iniciando proceso de escalado de datos ---")
 
-    # Guarda metadatos relevantes como el número de clases y el diccionario de clases en un archivo JSON.
+    # 1. Remodelar los datos para el escalador: de (muestras, timesteps, features) a (muestras*timesteps, features)
+    nsamples, ntimesteps, nfeatures = X_crudo.shape
+    X_reshaped = X_crudo.reshape(-1, nfeatures)
+    print(f"Datos remodelados para el escalador de {X_crudo.shape} a {X_reshaped.shape}")
+
+    # 2. Crear y ajustar el escalador
+    scaler = StandardScaler()
+    scaler.fit(X_reshaped)
+    print("StandardScaler ajustado a los datos de entrenamiento.")
+
+    # 3. Guardar el escalador para usarlo después en la inferencia
+    scaler_filename = "mi_scaler_xyz.joblib"
+    joblib.dump(scaler, scaler_filename)
+    print(f"Escalador guardado exitosamente como '{scaler_filename}'")
+
+    # 4. Transformar los datos crudos a datos escalados
+    X_escalado_reshaped = scaler.transform(X_reshaped)
+    
+    # 5. Remodelar los datos escalados de vuelta a su forma original de secuencias
+    X_escalado = X_escalado_reshaped.reshape(nsamples, ntimesteps, nfeatures)
+    print(f"Datos escalados y remodelados de vuelta a {X_escalado.shape}")
+    # --------------------------------------------------------------------
+
+    # -- Llama a la función de guardado con los datos ESCALADOS y un nuevo nombre de archivo ---
+    save_to_tfrecord(X_escalado, y, 'landmarks_escalados.tfrecord')
+
+    # Guardar metadatos (esto no cambia)
     metadata = {
         "num_classes": len(class_dict),
         "class_dict": class_dict

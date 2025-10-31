@@ -5,9 +5,9 @@ import tensorflow as tf
 # --- Configuración de Dimensiones ---
 # Estas variables definen la forma de los datos de entrada para el modelo.
 timesteps = 30  # Número de "pasos de tiempo" o frames en cada secuencia de landmarks.
-num_landmarks = 21  # Número de landmarks (puntos clave) detectados por mano (ej., MediaPipe Hands detecta 21).
+num_landmarks = 21  # Número de landmarks (puntos clave) detectados por mano (ej., MediaPipe Hands detecta 28).
 features_per_landmark = 3  # Número de características por landmark (ej., x, y, z coordenadas).
-input_dim = num_landmarks * features_per_landmark  # Dimensión total de las características para un solo frame (21 * 3 = 63).
+input_dim = num_landmarks * features_per_landmark  # Dimensión total de las características para un solo frame (28 * 3 = 63).
 
 # --- Función para Parsear TFRecord ---
 def _parse_function(example_proto):
@@ -66,10 +66,10 @@ def load_dataset(tfrecord_path, batch_size=32, shuffle=True):
 # --- Cargar Datasets ---
 batch_size = 32 # Define el tamaño del batch a usar durante el entrenamiento y la evaluación.
 # Carga el dataset de entrenamiento desde el archivo TFRecord, con barajado activado.
-train_ds = load_dataset("landmark_sequences.tfrecord", batch_size=batch_size, shuffle=True)
+train_ds = load_dataset("landmarks_escalados.tfrecord", batch_size=batch_size, shuffle=True)
 # Carga el dataset de prueba. Aquí se usa el mismo archivo TFRecord, pero sin barajar.
 # En un escenario real, deberías tener archivos TFRecord separados para entrenamiento y prueba.
-test_ds = load_dataset("landmark_sequences.tfrecord", batch_size=batch_size, shuffle=False)
+test_ds = load_dataset("landmarks_escalados.tfrecord", batch_size=batch_size, shuffle=False)
 
 # --- Modelo LSTM ---
 # Define la arquitectura de la red neuronal, que es una red recurrente (LSTM).
@@ -88,8 +88,8 @@ model = tf.keras.Sequential([
     # Capa de salida densa. El número de neuronas debe ser igual al número de clases.
     # La activación 'softmax' se usa para problemas de clasificación multiclase,
     # produciendo probabilidades para cada clase.
-    # NOTA: Reemplaza "5" por el número real de clases de tu dataset.
-    tf.keras.layers.Dense(21, activation='softmax')
+    # NOTA: Reemplaza "28" por el número real de clases de tu dataset.
+    tf.keras.layers.Dense(28, activation='softmax')
 ])
 
 # Compila el modelo, configurando el optimizador, la función de pérdida y las métricas.
