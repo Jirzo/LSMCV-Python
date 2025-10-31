@@ -1,15 +1,21 @@
 /data
-/pickles
-/6554337.json
-/model.p
-/model_abecedario.joblib
-/model_abecedario.pickle
-/data.pickle
+/dataStaticSigns
+/dataTesting
+datalettersset.joblib
+randomFT_model.joblib
+datamovinglettersset.joblib
+datasetMovingTesting.joblib
+best_rf_model.joblib
 
 # Python bytecode files
 __pycache__/
 *.pyc
 *.pyo
+
+*.keras
+*.joblib
+*.tfrecord
+*.json
 
 # Virtual environment
 /.env/
@@ -39,3 +45,4 @@ Thumbs.db          # Windows
 
 # Miscellaneous
 *.bak      
+datamovinglettersset.joblib
